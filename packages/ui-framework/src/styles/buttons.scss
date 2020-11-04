@@ -1,0 +1,42 @@
+
+.btn {
+  height: 44px;
+  border-radius: 22px;
+  border: 0;
+  color: #fff;
+  padding: 4px 16px;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+.btn--loading {
+  opacity: 0.7;
+}
+
+@mixin btn-variant($color) {
+  @extend .btn;
+  background-color: $color;
+  text-transform: uppercase;
+
+  &:disabled,
+  &.disabled,
+  &:disabled:focus,
+  &:disabled:hover {
+    background-color: lighten($color: $color, $amount: 10);
+  }
+}
+
+.btn--red {
+  @include btn-variant($color-red);
+}
+
+.btn--blue {
+  @include btn-variant($color-blue);
+}
+
+.btn--green {
+  @include btn-variant($color-green);
+}

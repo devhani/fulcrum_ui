@@ -1,0 +1,19 @@
+
+// @font-face {
+//     font-family: Avenir;
+//     src: url("/fonts/AvenirLTStd-Medium.otf") format("opentype");
+// }
+
+html {
+  box-sizing: border-box;
+  height: 100%;
+  color: var(--color-primary-txt);
+  -webkit-tap-highlight-color: transparent;
+}
+
+*,
+*::before,
+*::after {
+  touch-action: manipulation; // No zoom, etc in mobile browsers - Safari does not support "none"
+  box-sizing: inherit;
+}
