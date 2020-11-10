@@ -5,6 +5,7 @@ import React, { PureComponent } from 'react'
 import Intercom from 'react-intercom'
 import Modal from 'react-modal'
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
+import appConfig from '../config/appConfig'
 import { ProviderTypeDictionary } from '../domain/ProviderTypeDictionary'
 import { Web3ConnectionFactory } from '../domain/Web3ConnectionFactory'
 import Footer from '../layout/Footer'
@@ -14,11 +15,6 @@ import { StakingProviderEvents } from '../services/events/StakingProviderEvents'
 import stakingProvider from '../services/StakingProvider'
 import LocationListener from './LocationListener'
 import ProviderMenu from './ProviderMenu'
-
-const isMainnetProd =
-  process.env.NODE_ENV &&
-  process.env.NODE_ENV !== 'development' &&
-  process.env.REACT_APP_ETH_NETWORK === 'mainnet'
 
 interface IAppRouterState {
   isProviderMenuModalOpen: boolean
@@ -110,7 +106,7 @@ export default class AppRouter extends PureComponent<any, IAppRouterState> {
           />
         </Modal>
 
-        {isMainnetProd ? <Intercom appID="dfk4n5ut" /> : null}
+        {appConfig.isMainnetProd ? <Intercom appID="dfk4n5ut" /> : null}
         <Router>
           <LocationListener doNetworkConnect={this.doNetworkConnect}>
             <Switch>
