@@ -27,6 +27,7 @@ import { LendTransactionMinedEvent } from './events/LendTransactionMinedEvent'
 import { TasksQueueEvents } from './events/TasksQueueEvents'
 import { TradeTransactionMinedEvent } from './events/TradeTransactionMinedEvent'
 import { TasksQueue } from './TasksQueue'
+import tradeUtils from  '../lib/tradeUtils'
 
 import TagManager from 'react-gtm-module'
 import configProviders from '../config/providers.json'
@@ -1262,13 +1263,11 @@ export class FulcrumProvider {
     if (!slippageJsonOneTokenWorth.expectedRate || !slippageJsonTradeAmount.expectedRate) {
       return new BigNumber(0)
     }
-    const slippage = new BigNumber(slippageJsonOneTokenWorth.expectedRate)
-      .minus(slippageJsonTradeAmount.expectedRate)
-      .abs()
-      .div(slippageJsonTradeAmount.expectedRate)
-      .times(100)
 
-    return slippage
+    return tradeUtils.calculateSlippage(
+      slippageJsonOneTokenWorth.expectedRate,
+      slippageJsonTradeAmount.expectedRate
+    )
   }
 
   // public getTradeSlippageRate = async (request: TradeRequest, tradedAmountEstimate: BigNumber): Promise<BigNumber | null> => {
