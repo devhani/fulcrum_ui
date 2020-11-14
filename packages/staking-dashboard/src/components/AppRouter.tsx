@@ -1,12 +1,10 @@
 import { Web3ReactProvider } from '@web3-react/core'
-import { ConnectorEvent } from '@web3-react/types'
 import React, { PureComponent } from 'react'
 import Intercom from 'react-intercom'
 import Modal from 'react-modal'
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
 import appConfig from '../config/appConfig'
 import { ProviderTypeDictionary } from '../domain/ProviderTypeDictionary'
-import { Web3ConnectionFactory } from '../domain/Web3ConnectionFactory'
 import Footer from '../layout/Footer'
 import DashboardPage from '../pages/DashboardPage'
 import { ProviderChangedEvent } from '../services/events/ProviderChangedEvent'
@@ -30,8 +28,6 @@ export default class AppRouter extends PureComponent<any, IAppRouterState> {
       isLoading: false,
       isMobileMedia: window.innerWidth <= 767
     }
-    stakingProvider.on(StakingProviderEvents.ProviderChanged, this.onProviderChanged)
-    stakingProvider.on(StakingProviderEvents.ProviderIsChanging, this.onProviderChanging)
   }
 
   public onProviderChanging = () => {
@@ -55,27 +51,17 @@ export default class AppRouter extends PureComponent<any, IAppRouterState> {
 
   public componentWillUnmount(): void {
     this._isMounted = false
-    stakingProvider.removeListener(
-      StakingProviderEvents.ProviderIsChanging,
-      this.onProviderChanging
-    )
-    stakingProvider.removeListener(StakingProviderEvents.ProviderChanged, this.onProviderChanged)
+    stakingProvider.off(StakingProviderEvents.ProviderIsChanging, this.onProviderChanging)
+    stakingProvider.off(StakingProviderEvents.ProviderChanged, this.onProviderChanged)
     window.removeEventListener('resize', this.didResize)
   }
 
   public componentDidMount(): void {
     this._isMounted = true
-    window.addEventListener('resize', this.didResize)
+    stakingProvider.on(StakingProviderEvents.ProviderChanged, this.onProviderChanged)
+    stakingProvider.on(StakingProviderEvents.ProviderIsChanging, this.onProviderChanging)
     this.doNetworkConnect()
-  }
-
-  public getLibrary = async (provider: any, connector: any): Promise<any> => {
-    // handle connectors events (i.e. network changed)
-    await stakingProvider.setWeb3Provider(connector)
-    if (!connector.listeners(ConnectorEvent.Update).includes(stakingProvider.onConnectorUpdated)) {
-      connector.on(ConnectorEvent.Update, stakingProvider.onConnectorUpdated)
-    }
-    return Web3ConnectionFactory.currentWeb3Engine
+    window.addEventListener('resize', this.didResize)
   }
 
   public doNetworkConnect = () => {
@@ -90,7 +76,7 @@ export default class AppRouter extends PureComponent<any, IAppRouterState> {
 
   public render() {
     return (
-      <Web3ReactProvider getLibrary={this.getLibrary}>
+      <Web3ReactProvider getLibrary={stakingProvider.getLibrary}>
         <Modal
           isOpen={this.state.isProviderMenuModalOpen}
           onRequestClose={this.closeProviderMenu}
