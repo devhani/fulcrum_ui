@@ -7,7 +7,6 @@ import Representative3 from '../assets/images/representative3.png'
 import { ReactComponent as BPTIcon } from '../assets/images/token-bpt.svg'
 import { ReactComponent as BzrxIcon } from '../assets/images/token-bzrx.svg'
 import { ReactComponent as VBzrxIcon } from '../assets/images/token-vbzrx.svg'
-import appConfig from '../config/appConfig'
 import { BecomeRepresentativeRequest } from '../domain/BecomeRepresentativeRequest'
 import { ClaimReabteRewardsRequest } from '../domain/ClaimReabteRewardsRequest'
 import { ClaimRequest } from '../domain/ClaimRequest'
@@ -15,7 +14,6 @@ import { ConvertRequest } from '../domain/ConvertRequest'
 import { IRep } from '../domain/IRep'
 import { RequestStatus } from '../domain/RequestStatus'
 import { RequestTask } from '../domain/RequestTask'
-import { StakingRequest } from '../domain/StakingRequest'
 import stakingApi from '../lib/stakingApi'
 import { StakingProviderEvents } from '../services/events/StakingProviderEvents'
 import stakingProvider from '../services/StakingProvider'
@@ -24,6 +22,7 @@ import AnimationTx from './AnimationTx'
 import FindRepresentative from './FindRepresentative'
 import FormAssetBalance from './FormAssetBalance'
 import FormRewards from './FormRewards'
+import Loader from './Loader'
 import TopRepList from './TopRepList'
 
 interface IFormState {
@@ -45,6 +44,7 @@ interface IFormState {
   delegateAddress: string
   rebateRewards: BigNumber
   isAnimationTx: boolean
+  isLoadingBalances: boolean
 }
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
@@ -70,7 +70,8 @@ export default class Form extends PureComponent<{}, IFormState> {
       userEarnings: new BigNumber(0),
       rebateRewards: new BigNumber(0),
       delegateAddress: '',
-      isAnimationTx: false
+      isAnimationTx: false,
+      isLoadingBalances: true
     }
 
     this._isMounted = false
@@ -103,22 +104,7 @@ export default class Form extends PureComponent<{}, IFormState> {
     return stateUpdate
   }
 
-  private async derivedUpdate() {
-    this.isAlreadyRepresentative = await stakingProvider.checkIsRep()
-
-    await this.updateLocalState(() => stakingProvider.getUserBalances(appConfig.appNetwork))
-
-    await this.updateLocalState(async () => {
-      const [userEarnings, rebateRewards] = await Promise.all([
-        stakingProvider.getUserEarnings(),
-        stakingProvider.getRebateRewards()
-      ])
-      return {
-        userEarnings,
-        rebateRewards: rebateRewards.div(10 ** 18)
-      }
-    })
-
+  private async getRepresentatives() {
     const repsList = ((await stakingProvider.getRepresentatives()) as IRep[]).map((rep, i) => {
       rep.index = i
       rep.imageSrc = i % 3 === 0 ? Representative1 : i % 2 === 0 ? Representative2 : Representative3
@@ -135,18 +121,43 @@ export default class Form extends PureComponent<{}, IFormState> {
     )
 
     await this.updateLocalState({ topRepsList })
+    return { repsList, topRepsList }
+  }
 
+  private async getDelegate(topRepsList: IRep[]) {
     const delegateAddress = await stakingProvider.getDelegateAddress()
     const delegate = topRepsList.find(
       (e) => e.wallet.toLowerCase() === delegateAddress.toLowerCase()
     )
     if (delegate && !topRepsList.includes(delegate)) {
-      topRepsList.push(delegate)
+      topRepsList = topRepsList.concat([delegate])
     }
 
     if (this._isMounted) {
-      this.setState({ delegateAddress, selectedRepAddress: delegateAddress })
+      this.setState({ delegateAddress, selectedRepAddress: delegateAddress, topRepsList })
     }
+  }
+
+  private async derivedUpdate() {
+    this.setState({ isLoadingBalances: true })
+    this.isAlreadyRepresentative = await stakingProvider.checkIsRep()
+
+    await this.updateLocalState(() => stakingProvider.getUserBalances())
+
+    await this.updateLocalState(async () => {
+      const [userEarnings, rebateRewards] = await Promise.all([
+        stakingProvider.getUserEarnings(),
+        stakingProvider.getRebateRewards()
+      ])
+      return {
+        userEarnings,
+        rebateRewards: rebateRewards.div(10 ** 18)
+      }
+    })
+
+    const { topRepsList } = await this.getRepresentatives()
+    await this.getDelegate(topRepsList)
+    this.setState({ isLoadingBalances: false })
   }
 
   private onProviderAvailable = async () => {
@@ -200,31 +211,8 @@ export default class Form extends PureComponent<{}, IFormState> {
   }
 
   public onStakeClick = (bzrx: BigNumber, vbzrx: BigNumber, bpt: BigNumber) => {
-    if (this.state.selectedRepAddress === '') {
-      return
-    }
-
-    const bzrxAmount = bzrx.gt(this.state.bzrxBalance.times(10 ** 18))
-      ? this.state.bzrxBalance.times(10 ** 18)
-      : bzrx
-    const vbzrxAmount = vbzrx.gt(this.state.vBzrxBalance.times(10 ** 18))
-      ? this.state.vBzrxBalance.times(10 ** 18)
-      : vbzrx
-    let bptAmount
-    if (appConfig.isKovan) {
-      bptAmount = bpt.gt(this.state.bptBalance.times(10 ** 6))
-        ? this.state.bptBalance.times(10 ** 6)
-        : bpt
-    } else {
-      bptAmount = bpt.gt(this.state.bptBalance.times(10 ** 18))
-        ? this.state.bptBalance.times(10 ** 18)
-        : bpt
-    }
-
     stakingProvider
-      .onRequestConfirmed(
-        new StakingRequest(bzrxAmount, vbzrxAmount, bptAmount, this.state.selectedRepAddress)
-      )
+      .stakeTokens({ bzrx, vbzrx, bpt }, this.state.selectedRepAddress)
       .catch((err) => {
         console.error(err)
       })
@@ -316,6 +304,15 @@ export default class Form extends PureComponent<{}, IFormState> {
             ) : (
               <React.Fragment>
                 <div className="calculator-row balance">
+                  {this.state.isLoadingBalances && (
+                    <Loader
+                      className="calculator__balance-loader"
+                      quantityDots={3}
+                      sizeDots="small"
+                      title=""
+                      isOverlay={false}
+                    />
+                  )}
                   <div className="balance-wrapper">
                     <div className="balance-item">
                       <div className="row-header">Wallet Balance:</div>
@@ -327,19 +324,22 @@ export default class Form extends PureComponent<{}, IFormState> {
                         }`}
                         tokenLogo={<BzrxIcon />}
                         balance={this.state.bzrxBalance}
-                        name="BZRX"/>
+                        name="BZRX"
+                      />
 
                       <FormAssetBalance
                         link={`${etherscanURL}token/0xB72B31907C1C95F3650b64b2469e08EdACeE5e8F`}
                         tokenLogo={<VBzrxIcon />}
                         balance={this.state.vBzrxBalance}
-                        name="vBZRX"/>
+                        name="vBZRX"
+                      />
 
                       <FormAssetBalance
                         link={`${etherscanURL}token/0xe26A220a341EAca116bDa64cF9D5638A935ae629`}
                         tokenLogo={<BPTIcon />}
                         balance={this.state.bptBalance}
-                        name="vBZRX"/>
+                        name="vBZRX"
+                      />
                     </div>
                     <div className="balance-item">
                       <div className="row-header">Staking Balance:</div>
@@ -348,19 +348,22 @@ export default class Form extends PureComponent<{}, IFormState> {
                         link={`${etherscanURL}token/0x56d811088235F11C8920698a204A5010a788f4b3`}
                         tokenLogo={<BzrxIcon />}
                         balance={this.state.bzrxStakingBalance}
-                        name="BZRX"/>
+                        name="BZRX"
+                      />
 
                       <FormAssetBalance
                         link={`${etherscanURL}token/0xB72B31907C1C95F3650b64b2469e08EdACeE5e8F`}
                         tokenLogo={<VBzrxIcon />}
                         balance={this.state.vBzrxStakingBalance}
-                        name="vBZRX"/>
+                        name="vBZRX"
+                      />
 
                       <FormAssetBalance
                         link={`${etherscanURL}token/0xe26A220a341EAca116bDa64cF9D5638A935ae629`}
                         tokenLogo={<BPTIcon />}
                         balance={this.state.bptStakingBalance}
-                        name="BPT"/>
+                        name="BPT"
+                      />
                     </div>
                     <p className="notice">
                       The staking dashboard in its current form tracks BZRX in your wallet or
@@ -374,7 +377,8 @@ export default class Form extends PureComponent<{}, IFormState> {
                   rebateRewards={this.state.rebateRewards}
                   userEarnings={this.state.userEarnings}
                   etherscanURL={etherscanURL}
-                  onClaimRebateRewardsClick={this.onClaimRebateRewardsClick}/>
+                  onClaimRebateRewardsClick={this.onClaimRebateRewardsClick}
+                />
 
                 {this.state.bzrxV1Balance.gt(0) && (
                   <div className="convert-button">
