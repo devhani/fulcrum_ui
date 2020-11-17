@@ -6,6 +6,7 @@ interface ILoaderProps {
   title: string
   isOverlay: boolean
   isWarningTitle?: boolean
+  className?: string
 }
 
 export default class Loader extends PureComponent<ILoaderProps> {
@@ -31,7 +32,7 @@ export default class Loader extends PureComponent<ILoaderProps> {
   public render() {
     return (
       <React.Fragment>
-        <div className="loader">
+        <div className={`loader ${this.props.className || ''}`}>
           {this.props.isOverlay ? <div className="loader-wrapper" /> : null}
           <div className={`${this.props.isOverlay ? `loader-overlay` : ``}`}>
             <div className={`loader-content loader-content-${this.props.sizeDots}`}>
