@@ -8,7 +8,6 @@ import { ProviderTypeDictionary } from '../domain/ProviderTypeDictionary'
 import Footer from '../layout/Footer'
 import DashboardPage from '../pages/DashboardPage'
 import { ProviderChangedEvent } from '../services/events/ProviderChangedEvent'
-import { StakingProviderEvents } from '../services/events/StakingProviderEvents'
 import stakingProvider from '../services/StakingProvider'
 import ProviderMenu from './ProviderMenu'
 
@@ -51,15 +50,15 @@ export default class AppRouter extends PureComponent<any, IAppRouterState> {
 
   public componentWillUnmount(): void {
     this._isMounted = false
-    stakingProvider.off(StakingProviderEvents.ProviderIsChanging, this.onProviderChanging)
-    stakingProvider.off(StakingProviderEvents.ProviderChanged, this.onProviderChanged)
+    stakingProvider.off('ProviderIsChanging', this.onProviderChanging)
+    stakingProvider.off('ProviderChanged', this.onProviderChanged)
     window.removeEventListener('resize', this.didResize)
   }
 
   public componentDidMount(): void {
     this._isMounted = true
-    stakingProvider.on(StakingProviderEvents.ProviderChanged, this.onProviderChanged)
-    stakingProvider.on(StakingProviderEvents.ProviderIsChanging, this.onProviderChanging)
+    stakingProvider.on('ProviderChanged', this.onProviderChanged)
+    stakingProvider.on('ProviderIsChanging', this.onProviderChanging)
     this.doNetworkConnect()
     window.addEventListener('resize', this.didResize)
   }

@@ -15,7 +15,6 @@ import { IRep } from '../domain/IRep'
 import { RequestStatus } from '../domain/RequestStatus'
 import { RequestTask } from '../domain/RequestTask'
 import stakingApi from '../lib/stakingApi'
-import { StakingProviderEvents } from '../services/events/StakingProviderEvents'
 import stakingProvider from '../services/StakingProvider'
 import AddToBalance from './AddToBalance'
 import AnimationTx from './AnimationTx'
@@ -170,18 +169,18 @@ export default class Form extends PureComponent<{}, IFormState> {
 
   public componentDidMount(): void {
     this._isMounted = true
-    stakingProvider.on(StakingProviderEvents.ProviderAvailable, this.onProviderAvailable)
-    stakingProvider.on(StakingProviderEvents.ProviderChanged, this.onProviderChanged)
-    stakingProvider.on(StakingProviderEvents.AskToOpenProgressDlg, this.onAskToOpenProgressDlg)
-    stakingProvider.on(StakingProviderEvents.AskToCloseProgressDlg, this.onAskToCloseProgressDlg)
+    stakingProvider.on('ProviderAvailable', this.onProviderAvailable)
+    stakingProvider.on('ProviderChanged', this.onProviderChanged)
+    stakingProvider.on('AskToOpenProgressDlg', this.onAskToOpenProgressDlg)
+    stakingProvider.on('AskToCloseProgressDlg', this.onAskToCloseProgressDlg)
   }
 
   public componentWillUnmount(): void {
     this._isMounted = false
-    stakingProvider.off(StakingProviderEvents.ProviderAvailable, this.onProviderAvailable)
-    stakingProvider.off(StakingProviderEvents.ProviderChanged, this.onProviderChanged)
-    stakingProvider.off(StakingProviderEvents.AskToOpenProgressDlg, this.onAskToOpenProgressDlg)
-    stakingProvider.off(StakingProviderEvents.AskToCloseProgressDlg, this.onAskToCloseProgressDlg)
+    stakingProvider.off('ProviderAvailable', this.onProviderAvailable)
+    stakingProvider.off('ProviderChanged', this.onProviderChanged)
+    stakingProvider.off('AskToOpenProgressDlg', this.onAskToOpenProgressDlg)
+    stakingProvider.off('AskToCloseProgressDlg', this.onAskToCloseProgressDlg)
   }
 
   public onBzrxV1ToV2ConvertClick = () => {

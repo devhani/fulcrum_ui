@@ -60,8 +60,8 @@ export default class AddToBalance extends PureComponent<IAddToBalanceProps, IAdd
   get canStake() {
     const { bzrxInput, vbzrxInput, bptInput } = this.inputsAsBigNumbers
     const { bzrxMax, vbzrxMax, bptMax } = this.props
-    const userBalances = {bzrx: bzrxMax, vbzrx: vbzrxMax, bpt: bptMax}
-    const tokensToStake = {bzrx: bzrxInput, vbzrx: vbzrxInput, bpt: bptInput}
+    const userBalances = { bzrx: bzrxMax, vbzrx: vbzrxMax, bpt: bptMax }
+    const tokensToStake = { bzrx: bzrxInput, vbzrx: vbzrxInput, bpt: bptInput }
     return stakingUtils.verifyStake(userBalances, tokensToStake)
   }
 

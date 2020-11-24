@@ -37,7 +37,8 @@
     "react-router-dom": "^4.3.1",
     "react-tippy": "^1.2.3",
     "rxjs": "^6.5.2",
-    "simplebar-react": "^2.2.0"
+    "simplebar-react": "^2.2.0",
+    "tiny-typed-emitter": "2.0.3"
   },
   "devDependencies": {
     "@0x/abi-gen": "^2.0.9",

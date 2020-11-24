@@ -2,7 +2,7 @@ import { addressUtils, BigNumber } from '@0x/utils'
 import { TransactionReceipt, Web3Wrapper } from '@0x/web3-wrapper'
 import { AbstractConnector } from '@web3-react/abstract-connector'
 import { ConnectorEvent, ConnectorUpdate } from '@web3-react/types'
-import { EventEmitter } from 'events'
+import { TypedEmitter } from 'tiny-typed-emitter'
 import appConfig from '../config/appConfig'
 import { Asset } from '../domain/Asset'
 import { AssetsDictionary } from '../domain/AssetsDictionary'
@@ -19,7 +19,6 @@ import { Web3ConnectionFactory } from '../domain/Web3ConnectionFactory'
 import stakingUtils from '../lib/stakingUtils'
 import { ContractsSource } from './ContractsSource'
 import { ProviderChangedEvent } from './events/ProviderChangedEvent'
-import { StakingProviderEvents } from './events/StakingProviderEvents'
 
 interface IUserBalances {
   bptBalance: BigNumber
@@ -31,7 +30,17 @@ interface IUserBalances {
   vBzrxStakingBalance: BigNumber
 }
 
-export class StakingProvider extends EventEmitter {
+interface IStakingProviderEvents {
+  ProviderAvailable: () => void
+  ProviderChanged: (event: ProviderChangedEvent) => void
+  ProviderIsChanging: () => void
+  TaskChanged: () => void
+  TransactionMined: () => void
+  AskToOpenProgressDlg: (task: RequestTask) => void
+  AskToCloseProgressDlg: (task: RequestTask) => void
+}
+
+export class StakingProvider extends TypedEmitter<IStakingProviderEvents> {
   public static Instance: StakingProvider
 
   public readonly gasLimit = '500000'
@@ -92,7 +101,7 @@ export class StakingProvider extends EventEmitter {
                 this.web3Wrapper = web3Wrapper
                 this.providerEngine = engine
                 this.contractsSource = contractsSource
-                this.emit(StakingProviderEvents.ProviderAvailable)
+                this.emit('ProviderAvailable')
               })
               .catch((err) => {
                 // TODO: actually handle error
@@ -123,15 +132,12 @@ export class StakingProvider extends EventEmitter {
     }
     this.unsupportedNetwork = false
     this.isLoading = true
-    this.emit(StakingProviderEvents.ProviderIsChanging)
+    this.emit('ProviderIsChanging')
     const providerType = await ProviderTypeDictionary.getProviderTypeByConnector(connector)
     await Web3ConnectionFactory.setWalletProvider(connector, providerType, account)
     await this.setWeb3ProviderFinalize(providerType)
     this.isLoading = false
-    this.emit(
-      StakingProviderEvents.ProviderChanged,
-      new ProviderChangedEvent(this.providerType, this.web3Wrapper)
-    )
+    this.emit('ProviderChanged', new ProviderChangedEvent(this.providerType, this.web3Wrapper))
   }
 
   public getLibrary = async (provider: any, connector: any): Promise<any> => {
@@ -144,13 +150,10 @@ export class StakingProvider extends EventEmitter {
   }
 
   public onConnectorUpdated = async (update: ConnectorUpdate) => {
-    this.emit(StakingProviderEvents.ProviderIsChanging)
+    this.emit('ProviderIsChanging')
     await Web3ConnectionFactory.updateConnector(update)
     await this.setWeb3ProviderFinalize(this.providerType)
-    this.emit(
-      StakingProviderEvents.ProviderChanged,
-      new ProviderChangedEvent(this.providerType, this.web3Wrapper)
-    )
+    this.emit('ProviderChanged', new ProviderChangedEvent(this.providerType, this.web3Wrapper))
   }
 
   public async setReadonlyWeb3Provider() {
@@ -202,13 +205,10 @@ export class StakingProvider extends EventEmitter {
 
   public deactivate = async () => {
     this.isLoading = true
-    this.emit(StakingProviderEvents.ProviderIsChanging)
+    this.emit('ProviderIsChanging')
     await this.setReadonlyWeb3Provider()
     this.isLoading = false
-    this.emit(
-      StakingProviderEvents.ProviderChanged,
-      new ProviderChangedEvent(this.providerType, this.web3Wrapper)
-    )
+    this.emit('ProviderChanged', new ProviderChangedEvent(this.providerType, this.web3Wrapper))
   }
 
   public getUserBalances = async () => {
@@ -222,8 +222,7 @@ export class StakingProvider extends EventEmitter {
         vBzrxStakingBalance: new BigNumber(0),
         bptStakingBalance: new BigNumber(0)
       }
-    }
-    else {
+    } else {
       const [
         bzrxV1Balance,
         bzrxBalance,
@@ -1053,7 +1052,7 @@ export class StakingProvider extends EventEmitter {
     try {
       this.requestTask = task
       task.setEventEmitter(this)
-      this.emit(StakingProviderEvents.AskToOpenProgressDlg, task)
+      this.emit('AskToOpenProgressDlg', task)
       if (!(this.web3Wrapper && this.contractsSource && this.contractsSource.canWrite)) {
         throw new Error('No provider available!')
       }
@@ -1122,7 +1121,7 @@ export class StakingProvider extends EventEmitter {
       }
       task.processingEnd(false, false, err)
     } finally {
-      this.emit(StakingProviderEvents.AskToCloseProgressDlg, task)
+      this.emit('AskToCloseProgressDlg', task)
     }
     return false
   }

@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react'
 import { RequestTask } from '../domain/RequestTask'
-import { StakingProviderEvents } from '../services/events/StakingProviderEvents'
 import stakingProvider from '../services/StakingProvider'
 
 export interface ITitle {
@@ -26,7 +25,7 @@ export default class TxLoaderStep extends PureComponent<ITxLoaderStepProps, ITxL
       title: { message: 'Loading', isWarning: false }
     }
 
-    stakingProvider.on(StakingProviderEvents.TaskChanged, this.onTaskChanged)
+    stakingProvider.on('TaskChanged', this.onTaskChanged)
     this.stepDiv = React.createRef()
     this._isMounted = false
   }
@@ -44,7 +43,7 @@ export default class TxLoaderStep extends PureComponent<ITxLoaderStepProps, ITxL
   public componentWillUnmount(): void {
     this._isMounted = false
 
-    stakingProvider.off(StakingProviderEvents.TaskChanged, this.onTaskChanged)
+    stakingProvider.off('TaskChanged', this.onTaskChanged)
   }
 
   public getTitle = (requestTask: RequestTask | undefined) => {

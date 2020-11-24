@@ -1,5 +1,4 @@
 import { EventEmitter } from 'events'
-import { StakingProviderEvents } from '../services/events/StakingProviderEvents'
 import { BecomeRepresentativeRequest } from './BecomeRepresentativeRequest'
 import { ClaimReabteRewardsRequest } from './ClaimReabteRewardsRequest'
 import { ClaimRequest } from './ClaimRequest'
@@ -46,7 +45,7 @@ export class RequestTask {
     this.txHash = txHash
 
     if (this.eventEmitter) {
-      this.eventEmitter.emit(StakingProviderEvents.TaskChanged)
+      this.eventEmitter.emit('TaskChanged')
     }
   }
 
@@ -59,7 +58,7 @@ export class RequestTask {
     this.stepCurrent = 1
 
     if (this.eventEmitter) {
-      this.eventEmitter.emit(StakingProviderEvents.TaskChanged)
+      this.eventEmitter.emit('TaskChanged')
     }
   }
 
@@ -67,7 +66,7 @@ export class RequestTask {
     this.stepCurrent++
 
     if (this.eventEmitter) {
-      this.eventEmitter.emit(StakingProviderEvents.TaskChanged)
+      this.eventEmitter.emit('TaskChanged')
     }
   }
 
@@ -80,7 +79,7 @@ export class RequestTask {
       : RequestStatus.FAILED
 
     if (this.eventEmitter) {
-      this.eventEmitter.emit(StakingProviderEvents.TaskChanged)
+      this.eventEmitter.emit('TaskChanged')
     }
   }
 }

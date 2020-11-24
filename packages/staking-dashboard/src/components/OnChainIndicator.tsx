@@ -3,7 +3,6 @@ import { ProviderType } from '../domain/ProviderType'
 import { ProviderTypeDetails } from '../domain/ProviderTypeDetails'
 import { ProviderTypeDictionary } from '../domain/ProviderTypeDictionary'
 import { ProviderChangedEvent } from '../services/events/ProviderChangedEvent'
-import { StakingProviderEvents } from '../services/events/StakingProviderEvents'
 import stakingProvider from '../services/StakingProvider'
 
 export interface IOnChainIndicatorProps {
@@ -33,9 +32,9 @@ export default class OnChainIndicator extends PureComponent<
       providerTypeDetails: null
     }
 
-    stakingProvider.on(StakingProviderEvents.ProviderIsChanging, this.onProviderIsChanging)
+    stakingProvider.on('ProviderIsChanging', this.onProviderIsChanging)
 
-    stakingProvider.on(StakingProviderEvents.ProviderChanged, this.onProviderChanged)
+    stakingProvider.on('ProviderChanged', this.onProviderChanged)
   }
   private _isMounted: boolean = false
 
@@ -63,7 +62,7 @@ export default class OnChainIndicator extends PureComponent<
 
   public componentWillUnmount(): void {
     this._isMounted = false
-    stakingProvider.off(StakingProviderEvents.ProviderChanged, this.onProviderChanged)
+    stakingProvider.off('ProviderChanged', this.onProviderChanged)
   }
 
   private derivedUpdate() {
