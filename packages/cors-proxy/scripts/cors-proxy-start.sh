@@ -1,2 +1,2 @@
 #!/bin/bash
-sudo systemctl restart cors-proxy
+sudo systemctl restart cors-proxy.service
