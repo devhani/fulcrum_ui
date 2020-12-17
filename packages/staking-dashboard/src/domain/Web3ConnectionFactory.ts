@@ -47,29 +47,32 @@ export class Web3ConnectionFactory {
       Web3ConnectionFactory.canWrite = canWrite
     } catch (e) {
       console.error(e)
-      Web3ConnectionFactory.setReadonlyProvider()
+      return Web3ConnectionFactory.setReadonlyProvider()
     }
   }
 
   public static async setReadonlyProvider() {
-    let providerEngine: Web3ProviderEngine = new Web3ProviderEngine({ pollingInterval: 3600000 }) // 1 hour polling
+    const providerEngine: Web3ProviderEngine = new Web3ProviderEngine({ pollingInterval: 3600000 }) // 1 hour polling
 
     const rpcSubprovider = await this.getRPCSubprovider()
     providerEngine.addProvider(rpcSubprovider)
 
-    // @ts-ignore
-    await providerEngine.start()
-
-    Web3ConnectionFactory.currentWeb3Engine = providerEngine
-    Web3ConnectionFactory.currentWeb3Wrapper = new Web3Wrapper(providerEngine)
-    Web3ConnectionFactory.networkId = await Web3ConnectionFactory.currentWeb3Wrapper.getNetworkIdAsync()
-    Web3ConnectionFactory.canWrite = false
-    Web3ConnectionFactory.userAccount = undefined
+    return new Promise((resolve) => {
+      providerEngine.start(async () => {
+        Web3ConnectionFactory.currentWeb3Engine = providerEngine
+        Web3ConnectionFactory.currentWeb3Wrapper = new Web3Wrapper(providerEngine)
+        Web3ConnectionFactory.networkId = await Web3ConnectionFactory.currentWeb3Wrapper.getNetworkIdAsync()
+        Web3ConnectionFactory.canWrite = false
+        Web3ConnectionFactory.userAccount = undefined
+        resolve(true)
+      })
+    })
   }
+
   public static async updateConnector(update: ConnectorUpdate) {
-    const { provider, chainId, account } = update
+    const { chainId, account } = update
     if (chainId) {
-      let networkId = chainId.toString()
+      const networkId = chainId.toString()
       Web3ConnectionFactory.networkId = networkId.includes('0x')
         ? parseInt(networkId, 16)
         : parseInt(networkId, 10)

@@ -257,11 +257,11 @@ export class Form extends Component<{}, IFormState> {
       ? this.state.vBzrxBalance.times(10 ** 18)
       : vbzrx
     let bptAmount
-    if (networkName === 'kovan')
+    if (networkName === 'kovan') {
       bptAmount = bpt.gt(this.state.bptBalance.times(10 ** 6))
         ? this.state.bptBalance.times(10 ** 6)
         : bpt
-    else {
+    } else {
       bptAmount = bpt.gt(this.state.bptBalance.times(10 ** 18))
         ? this.state.bptBalance.times(10 ** 18)
         : bpt

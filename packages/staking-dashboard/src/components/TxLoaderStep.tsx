@@ -50,7 +50,7 @@ export class TxLoaderStep extends Component<ITxLoaderStepProps, ITxLoaderStepSta
 
   public getTitle = (requestTask: RequestTask | undefined) => {
     if (requestTask === undefined) return null
-    let title = requestTask.steps.find((s, i) => i + 1 === requestTask!.stepCurrent)
+    let title = requestTask.steps.find((s, i) => i + 1 === requestTask.stepCurrent)
     if (!title) title = requestTask.status
 
     let errorMsg = ''
@@ -58,6 +58,7 @@ export class TxLoaderStep extends Component<ITxLoaderStepProps, ITxLoaderStepSta
       if (requestTask.error.message) {
         errorMsg = requestTask.error.message
       } else if (typeof requestTask.error === 'string') {
+        // TODO: clarify this: error can not be a string
         errorMsg = requestTask.error
       }
 
@@ -71,7 +72,7 @@ export class TxLoaderStep extends Component<ITxLoaderStepProps, ITxLoaderStepSta
           errorMsg =
             'The transaction seems like it will fail. Change request parameters and try again, please.' //The transaction seems like it will fail. You can submit the transaction anyway, or cancel.
         } else if (errorMsg.includes('Reverted by EVM')) {
-          errorMsg = 'The transaction failed. Reverted by EVM' //. Etherscan link:";
+          errorMsg = 'The transaction failed. Reverted by EVM' // . Etherscan link:";
         } else if (errorMsg.includes('MetaMask Tx Signature: User denied transaction signature.')) {
           errorMsg = "You didn't confirm in MetaMask. Please try again."
         } else if (errorMsg.includes('User denied account authorization.')) {
@@ -106,8 +107,9 @@ export class TxLoaderStep extends Component<ITxLoaderStepProps, ITxLoaderStepSta
   public onTaskChanged = async () => {
     const task = StakingProvider.Instance.getRequestTask()
     let title = this.getTitle(this.state.requestTask)
-    if (!title && this.state.requestTask?.status === 'Done')
+    if (!title && this.state.requestTask?.status === 'Done') {
       title = { message: 'Updating data', isWarning: false }
+    }
 
     this._isMounted &&
       this.setState({
@@ -115,12 +117,13 @@ export class TxLoaderStep extends Component<ITxLoaderStepProps, ITxLoaderStepSta
         title: title
       })
 
-    window.setTimeout(async () => {
-      ;(await this._isMounted) &&
+    window.setTimeout(() => {
+      if (this._isMounted) {
         this.setState({
           ...this.state,
           requestTask: task
         })
+      }
     }, 500)
   }
 }

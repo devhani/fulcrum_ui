@@ -197,7 +197,8 @@ export class AppRouter extends Component<any, IAppRouterState> {
           isOpen={this.state.isProviderMenuModalOpen}
           onRequestClose={this.onRequestClose}
           className="modal-content-div"
-          overlayClassName="modal-overlay-div">
+          overlayClassName="modal-overlay-div"
+          ariaHideApp={false}>
           <ProviderMenu
             providerTypes={ProviderTypeDictionary.WalletProviders}
             isMobileMedia={this.state.isMobileMedia}

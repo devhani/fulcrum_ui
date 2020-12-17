@@ -21,7 +21,7 @@ export const ProviderMenu = (props: IProviderMenuProps) => {
   const { connector, account, activate, deactivate, active, error } = context
 
   // handle logic to recognize the connector currently being activated
-  //@ts-ignore
+  // @ts-ignore
   const [activatingConnector, setActivatingConnector] = React.useState()
   React.useEffect(() => {
     if (activatingConnector && activatingConnector === connector) {
@@ -71,8 +71,9 @@ export const ProviderMenu = (props: IProviderMenuProps) => {
           isActivating={activating}
           onSelect={() => {
             if (!currentConnector) return
-            //@ts-ignore
+            // @ts-ignore
             setActivatingConnector(currentConnector)
+            // tslint:disable-next-line
             activate(currentConnector, (err) => console.error(err))
           }}
         />
