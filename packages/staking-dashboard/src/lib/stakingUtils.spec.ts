@@ -81,4 +81,21 @@ describe('stakingUtils', () => {
       expect(stakingUtils.verifyStake(userBalancesMock, tokensToStake)).toBe(true)
     })
   })
+
+  describe('isValidRepAddress', () => {
+    it('should return false for the zero address', () => {
+      const address = '0x0000000000000000000000000000000000000000'
+      expect(stakingUtils.isValidRepAddress(address)).toBe(false)
+    })
+
+    it('should return false for invalid addresses', () => {
+      expect(stakingUtils.isValidRepAddress('')).toBe(false)
+      expect(stakingUtils.isValidRepAddress('0x12321')).toBe(false)
+    })
+
+    it('should return true for a valid address', () => {
+      const address = '0x9B5dFE7965C4A30eAB764ff7abf81b3fa96847Fe'
+      expect(stakingUtils.isValidRepAddress(address)).toBe(true)
+    })
+  })
 })

@@ -1,4 +1,6 @@
-import { BigNumber } from '@0x/utils'
+import { addressUtils, BigNumber } from '@0x/utils'
+
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 /**
  * Checks if the amounts to be staked are valid.
@@ -26,6 +28,15 @@ function verifyStake(
   return true
 }
 
+/**
+ * A rep address is a valid ethereum address and can not be a zero address (0x000..)
+ * @param address Address to check
+ */
+function isValidRepAddress(address: string) {
+  return addressUtils.isAddress(address) && address !== ZERO_ADDRESS
+}
+
 export default {
-  verifyStake
+  verifyStake,
+  isValidRepAddress
 }
