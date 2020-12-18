@@ -1,19 +1,19 @@
 import { EventEmitter } from 'events'
-import { BecomeRepresentativeRequest } from './BecomeRepresentativeRequest'
-import { ClaimReabteRewardsRequest } from './ClaimReabteRewardsRequest'
-import { ClaimRequest } from './ClaimRequest'
-import { ConvertRequest } from './ConvertRequest'
-import { RequestStatus } from './RequestStatus'
-import { StakingRequest } from './StakingRequest'
+import BecomeRepresentativeRequest from './BecomeRepresentativeRequest'
+import ClaimRebateRewardsRequest from './ClaimRebateRewardsRequest'
+import ClaimRequest from './ClaimRequest'
+import ConvertRequest from './ConvertRequest'
+import RequestStatus from './RequestStatus'
+import StakingRequest from './StakingRequest'
 
-export class RequestTask {
+export default class RequestTask {
   private eventEmitter: EventEmitter | null = null
 
   public readonly request:
     | StakingRequest
     | ConvertRequest
     | ClaimRequest
-    | ClaimReabteRewardsRequest
+    | ClaimRebateRewardsRequest
     | BecomeRepresentativeRequest
   public status: RequestStatus
   public steps: string[]
@@ -26,7 +26,7 @@ export class RequestTask {
       | StakingRequest
       | ConvertRequest
       | ClaimRequest
-      | ClaimReabteRewardsRequest
+      | ClaimRebateRewardsRequest
       | BecomeRepresentativeRequest
   ) {
     this.request = request
@@ -45,7 +45,7 @@ export class RequestTask {
     this.txHash = txHash
 
     if (this.eventEmitter) {
-      this.eventEmitter.emit('TaskChanged')
+      this.eventEmitter.emit('TaskChanged', this)
     }
   }
 
@@ -58,7 +58,7 @@ export class RequestTask {
     this.stepCurrent = 1
 
     if (this.eventEmitter) {
-      this.eventEmitter.emit('TaskChanged')
+      this.eventEmitter.emit('TaskChanged', this)
     }
   }
 
@@ -66,7 +66,7 @@ export class RequestTask {
     this.stepCurrent++
 
     if (this.eventEmitter) {
-      this.eventEmitter.emit('TaskChanged')
+      this.eventEmitter.emit('TaskChanged', this)
     }
   }
 
@@ -79,7 +79,7 @@ export class RequestTask {
       : RequestStatus.FAILED
 
     if (this.eventEmitter) {
-      this.eventEmitter.emit('TaskChanged')
+      this.eventEmitter.emit('TaskChanged', this)
     }
   }
 }

@@ -1,5 +1,5 @@
 import box from '3box'
-import { IRep } from '../domain/IRep'
+import IRep from 'src/domain/IRep'
 
 /**
  * @param {string} hash address or transaction id
@@ -38,18 +38,17 @@ async function getRepsInfo(repsBaseInfoList: IRep[]): Promise<IRep[]> {
 
 /**
  * Get profile of a representative
- * @param item
- * @param index
+ * @param rep
  */
-async function getRepInfo(item: IRep, index: number): Promise<IRep> {
+async function getRepInfo(rep: IRep, index: number): Promise<IRep> {
   // Note: getProfile returns an empty object when profile does not exist
-  const profile = await box.getProfile(item.wallet)
-  const name = profile.name || item.name
+  const profile = await box.getProfile(rep.wallet)
+  const name = profile.name || rep.name
   const imageSrc = profile.image
     ? `https://ipfs.infura.io/ipfs/${profile.image[0].contentUrl['/']}`
-    : item.imageSrc
+    : rep.imageSrc
 
-  return { ...item, name, imageSrc, index }
+  return { ...rep, name, imageSrc, index }
 }
 
 export default {

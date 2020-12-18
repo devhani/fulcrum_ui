@@ -10,7 +10,7 @@ import { TrezorConnector } from '@web3-react/trezor-connector'
 import { WalletConnectConnector } from '@web3-react/walletconnect-connector'
 import { WalletLinkConnector } from '@web3-react/walletlink-connector'
 import configProviders from '../config/providers.json'
-import { Web3ConnectionFactory } from './Web3ConnectionFactory'
+import Web3ConnectionFactory from './Web3ConnectionFactory'
 
 const INITIAL_NETWORK = process.env.REACT_APP_ETH_NETWORK
 
@@ -35,7 +35,7 @@ const RPC_URL = Web3ConnectionFactory.getRPCUrl()
 
 const POLLING_INTERVAL = 3600000
 
-export const injected = new InjectedConnector({ supportedChainIds: [1, 3, 4, 42] })
+export const injected = new InjectedConnector({ supportedChainIds: [1, 3, 4, 42, 1337] })
 
 export const walletconnect = new WalletConnectConnector({
   rpc: { [networkId]: RPC_URL },

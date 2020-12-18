@@ -1,40 +1,29 @@
-import { addressUtils, BigNumber } from '@0x/utils'
+import { BigNumber } from '@0x/utils'
 import { TransactionReceipt, Web3Wrapper } from '@0x/web3-wrapper'
 import { AbstractConnector } from '@web3-react/abstract-connector'
 import { ConnectorEvent, ConnectorUpdate } from '@web3-react/types'
 import { TypedEmitter } from 'tiny-typed-emitter'
 import appConfig from '../config/appConfig'
-import { Asset } from '../domain/Asset'
-import { AssetsDictionary } from '../domain/AssetsDictionary'
-import { BecomeRepresentativeRequest } from '../domain/BecomeRepresentativeRequest'
-import { ClaimReabteRewardsRequest } from '../domain/ClaimReabteRewardsRequest'
-import { ClaimRequest } from '../domain/ClaimRequest'
-import { ConvertRequest } from '../domain/ConvertRequest'
-import { IWeb3ProviderSettings } from '../domain/IWeb3ProviderSettings'
-import { ProviderType } from '../domain/ProviderType'
-import { ProviderTypeDictionary } from '../domain/ProviderTypeDictionary'
-import { RequestTask } from '../domain/RequestTask'
-import { StakingRequest } from '../domain/StakingRequest'
-import { Web3ConnectionFactory } from '../domain/Web3ConnectionFactory'
-import stakingUtils from '../lib/stakingUtils'
+import Asset from '../domain/Asset'
+import AssetsDictionary from '../domain/AssetsDictionary'
+import BecomeRepresentativeRequest from '../domain/BecomeRepresentativeRequest'
+import ClaimRebateRewardsRequest from '../domain/ClaimRebateRewardsRequest'
+import ClaimRequest from '../domain/ClaimRequest'
+import ConvertRequest from '../domain/ConvertRequest'
+import IWeb3ProviderSettings from '../domain/IWeb3ProviderSettings'
+import ProviderType from '../domain/ProviderType'
+import ProviderTypeDictionary from '../domain/ProviderTypeDictionary'
+import RequestTask from '../domain/RequestTask'
+import StakingRequest from '../domain/StakingRequest'
+import Web3ConnectionFactory from '../domain/Web3ConnectionFactory'
 import { ContractsSource } from './ContractsSource'
-import { ProviderChangedEvent } from './events/ProviderChangedEvent'
-
-interface IUserBalances {
-  bptBalance: BigNumber
-  bptStakingBalance: BigNumber
-  bzrxBalance: BigNumber
-  bzrxStakingBalance: BigNumber
-  bzrxV1Balance: BigNumber
-  vBzrxBalance: BigNumber
-  vBzrxStakingBalance: BigNumber
-}
+import ProviderChangedEvent from './events/ProviderChangedEvent'
 
 interface IStakingProviderEvents {
   ProviderAvailable: () => void
   ProviderChanged: (event: ProviderChangedEvent) => void
   ProviderIsChanging: () => void
-  TaskChanged: () => void
+  TaskChanged: (task: RequestTask) => void
   TransactionMined: () => void
   AskToOpenProgressDlg: (task: RequestTask) => void
   AskToCloseProgressDlg: (task: RequestTask) => void
@@ -55,17 +44,7 @@ export class StakingProvider extends TypedEmitter<IStakingProviderEvents> {
   public web3ProviderSettings: IWeb3ProviderSettings
   public contractsSource: ContractsSource | null = null
   public accounts: string[] = []
-  public isLoading: boolean = false
   public unsupportedNetwork: boolean = false
-  public userBalances: IUserBalances = {
-    bzrxV1Balance: new BigNumber(0),
-    bzrxBalance: new BigNumber(0),
-    vBzrxBalance: new BigNumber(0),
-    bptBalance: new BigNumber(0),
-    bzrxStakingBalance: new BigNumber(0),
-    vBzrxStakingBalance: new BigNumber(0),
-    bptStakingBalance: new BigNumber(0)
-  }
   public impersonateAddress = ''
   private requestTask: RequestTask | undefined
 
@@ -136,16 +115,11 @@ export class StakingProvider extends TypedEmitter<IStakingProviderEvents> {
   }
 
   public setWeb3Provider = async (connector: AbstractConnector, account?: string) => {
-    if (this.isLoading) {
-      return
-    }
     this.unsupportedNetwork = false
-    this.isLoading = true
     this.emit('ProviderIsChanging')
     const providerType = await ProviderTypeDictionary.getProviderTypeByConnector(connector)
     await Web3ConnectionFactory.setWalletProvider(connector, providerType, account)
     await this.setWeb3ProviderFinalize(providerType)
-    this.isLoading = false
     this.emit('ProviderChanged', new ProviderChangedEvent(this.providerType, this.web3Wrapper))
   }
 
@@ -160,19 +134,19 @@ export class StakingProvider extends TypedEmitter<IStakingProviderEvents> {
 
   public onConnectorUpdated = async (update: ConnectorUpdate) => {
     this.emit('ProviderIsChanging')
-    await Web3ConnectionFactory.updateConnector(update)
+    Web3ConnectionFactory.updateConnector(update)
     await this.setWeb3ProviderFinalize(this.providerType)
     this.emit('ProviderChanged', new ProviderChangedEvent(this.providerType, this.web3Wrapper))
   }
 
   public async setReadonlyWeb3Provider() {
+    this.emit('ProviderIsChanging')
     await Web3ConnectionFactory.setReadonlyProvider()
     await this.setWeb3ProviderFinalize(ProviderType.None)
-    this.isLoading = false
+    this.emit('ProviderChanged', new ProviderChangedEvent(this.providerType, this.web3Wrapper))
   }
 
   public async setWeb3ProviderFinalize(providerType: ProviderType) {
-    // : Promise<boolean> {
     this.web3Wrapper = Web3ConnectionFactory.currentWeb3Wrapper
     this.providerEngine = Web3ConnectionFactory.currentWeb3Engine
     let canWrite = Web3ConnectionFactory.canWrite
@@ -213,53 +187,7 @@ export class StakingProvider extends TypedEmitter<IStakingProviderEvents> {
   }
 
   public deactivate = async () => {
-    this.isLoading = true
-    this.emit('ProviderIsChanging')
     await this.setReadonlyWeb3Provider()
-    this.isLoading = false
-    this.emit('ProviderChanged', new ProviderChangedEvent(this.providerType, this.web3Wrapper))
-  }
-
-  public getUserBalances = async () => {
-    if ([ProviderType.None, ProviderType.Alchemy].includes(this.providerType)) {
-      this.userBalances = {
-        bzrxV1Balance: new BigNumber(0),
-        bzrxBalance: new BigNumber(0),
-        vBzrxBalance: new BigNumber(0),
-        bptBalance: new BigNumber(0),
-        bzrxStakingBalance: new BigNumber(0),
-        vBzrxStakingBalance: new BigNumber(0),
-        bptStakingBalance: new BigNumber(0)
-      }
-    } else {
-      const [
-        bzrxV1Balance,
-        bzrxBalance,
-        vBzrxBalance,
-        bptBalance,
-        bzrxStakingBalance,
-        vBzrxStakingBalance,
-        bptStakingBalance
-      ] = await Promise.all([
-        this.getAssetTokenBalanceOfUser(Asset.BZRXv1),
-        this.stakeableByAsset(Asset.BZRX),
-        this.stakeableByAsset(Asset.vBZRX),
-        this.stakeableByAsset(Asset.BPT),
-        this.balanceOfByAsset(Asset.BZRX),
-        this.balanceOfByAsset(Asset.vBZRX),
-        this.balanceOfByAsset(Asset.BPT)
-      ])
-      this.userBalances = {
-        bzrxV1Balance: bzrxV1Balance.div(10 ** 18),
-        bzrxBalance: bzrxBalance.div(10 ** 18),
-        vBzrxBalance: vBzrxBalance.div(10 ** 18),
-        bptBalance: bptBalance.div(appConfig.bptDecimals),
-        bzrxStakingBalance: bzrxStakingBalance.div(10 ** 18),
-        vBzrxStakingBalance: vBzrxStakingBalance.div(10 ** 18),
-        bptStakingBalance: bptStakingBalance.div(appConfig.bptDecimals)
-      }
-    }
-    return this.userBalances
   }
 
   public getWeb3ProviderSettings(networkId: number | null): IWeb3ProviderSettings {
@@ -1060,20 +988,6 @@ export class StakingProvider extends TypedEmitter<IStakingProviderEvents> {
     tokensToStake: { bzrx: BigNumber; vbzrx: BigNumber; bpt: BigNumber },
     repAddress: string
   ) => {
-    const userBalances = {
-      bzrx: this.userBalances.bzrxBalance,
-      vbzrx: this.userBalances.vBzrxBalance,
-      bpt: this.userBalances.bptBalance
-    }
-
-    if (!stakingUtils.verifyStake(userBalances, tokensToStake)) {
-      throw new Error('Staking amounts are invalid. Maybe trying to stake more than possible.')
-    }
-
-    if (!addressUtils.isAddress(repAddress)) {
-      throw new Error('Invalid representative address')
-    }
-
     const bzrx = tokensToStake.bzrx.times(10 ** 18)
     const vbzrx = tokensToStake.vbzrx.times(10 ** 18)
     const bpt = tokensToStake.bpt.times(appConfig.bptDecimals)
@@ -1126,8 +1040,8 @@ export class StakingProvider extends TypedEmitter<IStakingProviderEvents> {
         case ClaimRequest:
           txHash = await this.processClaimRequestTask(task, account)
           break
-        case ClaimReabteRewardsRequest:
-          txHash = await this.processClaimReabteRewardsRequestTask(task, account)
+        case ClaimRebateRewardsRequest:
+          txHash = await this.processClaimRebateRewardsRequestTask(task, account)
           break
         case BecomeRepresentativeRequest:
           txHash = await this.processBecomeRepresentativeRequestTask(task, account)
@@ -1347,7 +1261,7 @@ export class StakingProvider extends TypedEmitter<IStakingProviderEvents> {
     return txHash
   }
 
-  private processClaimReabteRewardsRequestTask = async (task: RequestTask, account: string) => {
+  private processClaimRebateRewardsRequestTask = async (task: RequestTask, account: string) => {
     const bZxContract = await this.contractsSource!.getiBZxContract()
     if (!bZxContract) throw new Error('No ERC20 contract available!')
     // Submitting loan

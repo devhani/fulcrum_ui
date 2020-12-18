@@ -1,4 +1,4 @@
-import ethereumUtils from '../lib/ethereumUtils'
+import ethereumUtils from 'app-lib/ethereumUtils'
 
 const appNetwork = process.env.REACT_APP_ETH_NETWORK
 
@@ -22,5 +22,5 @@ export default {
   appNetworkId,
   bptDecimals,
   isKovan,
-  isMainnetProd,
+  isMainnetProd
 }

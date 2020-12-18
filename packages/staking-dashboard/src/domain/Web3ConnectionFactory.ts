@@ -1,24 +1,22 @@
-import { Web3Wrapper } from '@0x/web3-wrapper'
-
 import {
   RPCSubprovider,
   Web3ProviderEngine
 } from '@0x/subproviders'
-
-import configProviders from '../config/providers.json'
-
+import { Web3Wrapper } from '@0x/web3-wrapper'
 import { AbstractConnector } from '@web3-react/abstract-connector'
 import { ConnectorUpdate } from '@web3-react/types'
-import { ProviderType } from './ProviderType'
-const ethNetwork = process.env.REACT_APP_ETH_NETWORK
+import configProviders from '../config/providers.json'
+import appConfig from 'src/config/appConfig'
+import ProviderType from './ProviderType'
 
-export class Web3ConnectionFactory {
+export default class Web3ConnectionFactory {
   public static rpcSubprovider: RPCSubprovider
   public static networkId: number
   public static canWrite: boolean
   public static userAccount: string | undefined
   public static currentWeb3Engine: any
   public static currentWeb3Wrapper: Web3Wrapper
+  public static currentConnector: AbstractConnector | undefined
 
   public static async setWalletProvider(
     connector: AbstractConnector,
@@ -69,7 +67,7 @@ export class Web3ConnectionFactory {
     })
   }
 
-  public static async updateConnector(update: ConnectorUpdate) {
+  public static updateConnector(update: ConnectorUpdate) {
     const { chainId, account } = update
     if (chainId) {
       const networkId = chainId.toString()
@@ -77,7 +75,9 @@ export class Web3ConnectionFactory {
         ? parseInt(networkId, 16)
         : parseInt(networkId, 10)
     }
-    if (account) Web3ConnectionFactory.userAccount = account
+    if (account) {
+      Web3ConnectionFactory.userAccount = account
+    }
   }
 
   public static async getRPCSubprovider(): Promise<RPCSubprovider> {
@@ -89,15 +89,15 @@ export class Web3ConnectionFactory {
     let url
     let key
     if (process.env.NODE_ENV !== 'development') {
-      if (ethNetwork === 'kovan') {
+      if (appConfig.isKovan) {
         key = configProviders.Alchemy_ApiKey_kovan
       } else {
         key = configProviders.Alchemy_ApiKey
       }
-      url = `https://eth-${ethNetwork}.alchemyapi.io/v2/${key}`
+      url = `https://eth-${appConfig.appNetwork}.alchemyapi.io/v2/${key}`
     } else {
       key = process.env.REACT_APP_INFURA_KEY // own developer's infura key
-      url = `https://${ethNetwork}.infura.io/v3/${key}`
+      url = `https://${appConfig.appNetwork}.infura.io/v3/${key}`
     }
     return url
   }
