@@ -5,7 +5,6 @@ import { convertContract } from '../contracts/convert'
 import { erc20Contract } from '../contracts/erc20'
 import { iBZxContract } from '../contracts/iBZxContract'
 import { oracleContract } from '../contracts/oracle'
-import { traderCompensationContract } from '../contracts/traderCompensation'
 
 const { appNetwork } = appConfig
 
@@ -17,7 +16,6 @@ export class ContractsSource {
   private static convertJson: any
   private static erc20Json: any
   private static BZRXStakingInterimJson: any
-  private static traderCompensation: any
   private static iBZxJson: any
   private static oracleJson: any
 
@@ -39,9 +37,6 @@ export class ContractsSource {
     ContractsSource.erc20Json = await import(`./../assets/artifacts/${appNetwork}/erc20.json`)
     ContractsSource.BZRXStakingInterimJson = await import(
       `./../assets/artifacts/${appNetwork}/BZRXStakingInterim.json`
-    )
-    ContractsSource.traderCompensation = await import(
-      `./../assets/artifacts/${appNetwork}/traderCompensation.json`
     )
     ContractsSource.iBZxJson = await import(`./../assets/artifacts/${appNetwork}/iBZx.json`)
     ContractsSource.oracleJson = await import(`./../assets/artifacts/${appNetwork}/oracle.json`)
@@ -184,25 +179,6 @@ export class ContractsSource {
     return address
   }
 
-  public getTraderCompensationAddress(): string {
-    let address: string = ''
-    switch (this.networkId) {
-      case 1:
-        address = '0xeAC0b322Dc88cF708608B3FFAe1e9fB484A6A542'
-        break
-      case 3:
-        address = ''
-        break
-      case 4:
-        address = ''
-        break
-      case 42:
-        address = '0x11603cD5eEf6B308339d97e5428a085A2c4D4c08'
-        break
-    }
-    return address
-  }
-
   private async getErc20ContractRaw(addressErc20: string): Promise<erc20Contract> {
     await this.Init()
     return new erc20Contract(
@@ -239,15 +215,6 @@ export class ContractsSource {
     )
   }
 
-  private async getTraderCompensationContractRaw(): Promise<traderCompensationContract> {
-    await this.Init()
-    return new traderCompensationContract(
-      ContractsSource.traderCompensation.abi,
-      this.getTraderCompensationAddress().toLowerCase(),
-      this.provider
-    )
-  }
-
   private async getiBZxContractRaw(): Promise<iBZxContract> {
     await this.Init()
     return new iBZxContract(
@@ -258,7 +225,6 @@ export class ContractsSource {
   }
 
   public getErc20Contract = _.memoize(this.getErc20ContractRaw)
-  public getTraderCompensationContract = _.memoize(this.getTraderCompensationContractRaw)
   public getConvertContract = _.memoize(this.getConvertContractRaw)
   public getBZRXStakingInterimContract = _.memoize(this.getBZRXStakingInterimContractRaw)
   public getiBZxContract = _.memoize(this.getiBZxContractRaw)
