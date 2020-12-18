@@ -66,6 +66,7 @@ export class StakingProvider extends TypedEmitter<IStakingProviderEvents> {
     vBzrxStakingBalance: new BigNumber(0),
     bptStakingBalance: new BigNumber(0)
   }
+  public impersonateAddress = ''
   private requestTask: RequestTask | undefined
 
   public readonly UNLIMITED_ALLOWANCE_IN_BASE_UNITS = new BigNumber(2).pow(256).minus(1)
@@ -124,6 +125,14 @@ export class StakingProvider extends TypedEmitter<IStakingProviderEvents> {
 
   public setLocalstorageItem(item: string, val: string) {
     localStorage.setItem(item, val)
+  }
+
+  public getCurrentAccount(): string | undefined {
+    return this.impersonateAddress
+      ? this.impersonateAddress
+      : this.accounts.length > 0 && this.accounts[0]
+      ? this.accounts[0].toLowerCase()
+      : undefined
   }
 
   public setWeb3Provider = async (connector: AbstractConnector, account?: string) => {
@@ -320,8 +329,7 @@ export class StakingProvider extends TypedEmitter<IStakingProviderEvents> {
 
     if (this.web3Wrapper && this.contractsSource) {
       if (!account && this.contractsSource.canWrite) {
-        account =
-          this.accounts.length > 0 && this.accounts[0] ? this.accounts[0].toLowerCase() : undefined
+        account = this.getCurrentAccount()
       }
 
       if (account) {
@@ -563,8 +571,8 @@ export class StakingProvider extends TypedEmitter<IStakingProviderEvents> {
 
   public canOptin = async (): Promise<boolean> => {
     let result: boolean = false
-    const account =
-      this.accounts.length > 0 && this.accounts[0] ? this.accounts[0].toLowerCase() : null
+    const account = this.getCurrentAccount()
+
     if (!this.contractsSource) return result
 
     const traderCompensationContract = await this.contractsSource.getTraderCompensationContract()
@@ -582,9 +590,11 @@ export class StakingProvider extends TypedEmitter<IStakingProviderEvents> {
 
   public isClaimable = async (): Promise<BigNumber> => {
     let result: BigNumber = new BigNumber(0)
-    const account =
-      this.accounts.length > 0 && this.accounts[0] ? this.accounts[0].toLowerCase() : null
-    if (!this.contractsSource) return result
+    const account = this.getCurrentAccount()
+
+    if (!this.contractsSource) {
+      return result
+    }
 
     const traderCompensationContract = await this.contractsSource.getTraderCompensationContract()
     if (!account || !traderCompensationContract) return result
@@ -600,8 +610,8 @@ export class StakingProvider extends TypedEmitter<IStakingProviderEvents> {
   }
 
   public doOptin = async () => {
-    const account =
-      this.accounts.length > 0 && this.accounts[0] ? this.accounts[0].toLowerCase() : null
+    const account = this.getCurrentAccount()
+
     if (!this.contractsSource) {
       return null
     }
@@ -717,9 +727,11 @@ export class StakingProvider extends TypedEmitter<IStakingProviderEvents> {
       LPToken: BigNumber
     }> = []
 
-    const account =
-      this.accounts.length > 0 && this.accounts[0] ? this.accounts[0].toLowerCase() : null
-    if (!this.contractsSource) return result
+    const account = this.getCurrentAccount()
+
+    if (!this.contractsSource) {
+      return result
+    }
 
     const bzrxStakingContract = await this.contractsSource.getBZRXStakingInterimContract()
     if (!account || !bzrxStakingContract) return result
@@ -738,13 +750,16 @@ export class StakingProvider extends TypedEmitter<IStakingProviderEvents> {
 
   public checkIsRep = async (): Promise<boolean> => {
     let result = false
+    const account = this.getCurrentAccount()
 
-    const account =
-      this.accounts.length > 0 && this.accounts[0] ? this.accounts[0].toLowerCase() : null
-    if (!this.contractsSource) return result
+    if (!this.contractsSource || !account) {
+      return result
+    }
 
     const bzrxStakingContract = await this.contractsSource.getBZRXStakingInterimContract()
-    if (!account || !bzrxStakingContract) return result
+    if (!bzrxStakingContract) {
+      return result
+    }
 
     result = await bzrxStakingContract.reps.callAsync(account, {
       from: account
@@ -760,8 +775,7 @@ export class StakingProvider extends TypedEmitter<IStakingProviderEvents> {
       return result
     }
 
-    const account =
-      this.accounts.length > 0 && this.accounts[0] ? this.accounts[0].toLowerCase() : null
+    const account = this.getCurrentAccount()
 
     if (!account) {
       return result
@@ -790,12 +804,16 @@ export class StakingProvider extends TypedEmitter<IStakingProviderEvents> {
   public balanceOfByAsset = async (asset: Asset): Promise<BigNumber> => {
     let result = new BigNumber(0)
 
-    const account =
-      this.accounts.length > 0 && this.accounts[0] ? this.accounts[0].toLowerCase() : null
-    if (!this.contractsSource) return result
+    const account = this.getCurrentAccount()
+
+    if (!this.contractsSource || !account) {
+      return result
+    }
 
     const bzrxStakingContract = await this.contractsSource.getBZRXStakingInterimContract()
-    if (!account || !bzrxStakingContract) return result
+    if (!bzrxStakingContract) {
+      return result
+    }
 
     const tokenErc20Address = this.getErc20AddressOfAsset(asset)
     if (!tokenErc20Address) return result
@@ -814,12 +832,16 @@ export class StakingProvider extends TypedEmitter<IStakingProviderEvents> {
   public balanceOfByAssetWalletAware = async (asset: Asset): Promise<BigNumber> => {
     let result = new BigNumber(0)
 
-    const account =
-      this.accounts.length > 0 && this.accounts[0] ? this.accounts[0].toLowerCase() : null
-    if (!this.contractsSource) return result
+    const account = this.getCurrentAccount()
+
+    if (!this.contractsSource || !account) {
+      return result
+    }
 
     const bzrxStakingContract = await this.contractsSource.getBZRXStakingInterimContract()
-    if (!account || !bzrxStakingContract) return result
+    if (!bzrxStakingContract) {
+      return result
+    }
 
     const tokenErc20Address = this.getErc20AddressOfAsset(asset)
     if (!tokenErc20Address) return result
@@ -838,12 +860,16 @@ export class StakingProvider extends TypedEmitter<IStakingProviderEvents> {
   public getUserEarnings = async (): Promise<BigNumber> => {
     const result = new BigNumber(0)
 
-    const account =
-      this.accounts.length > 0 && this.accounts[0] ? this.accounts[0].toLowerCase() : null
-    if (!this.contractsSource) return result
+    const account = this.getCurrentAccount()
+
+    if (!this.contractsSource || !account) {
+      return result
+    }
 
     const bzrxStakingContract = await this.contractsSource.getBZRXStakingInterimContract()
-    if (!account || !bzrxStakingContract) return result
+    if (!bzrxStakingContract) {
+      return result
+    }
 
     const earnedUsdAmount = await bzrxStakingContract.earned.callAsync(account, {
       from: account
@@ -855,12 +881,14 @@ export class StakingProvider extends TypedEmitter<IStakingProviderEvents> {
   public getDelegateAddress = async (): Promise<string> => {
     let result = ''
 
-    const account =
-      this.accounts.length > 0 && this.accounts[0] ? this.accounts[0].toLowerCase() : null
-    if (!this.contractsSource) return result
+    const account = this.getCurrentAccount()
+
+    if (!this.contractsSource || !account) {
+      return result
+    }
 
     const bzrxStakingContract = await this.contractsSource.getBZRXStakingInterimContract()
-    if (!account || !bzrxStakingContract) return result
+    if (!bzrxStakingContract) return result
 
     result = await bzrxStakingContract.delegate.callAsync(account, {
       from: account
@@ -872,12 +900,16 @@ export class StakingProvider extends TypedEmitter<IStakingProviderEvents> {
   public getRebateRewards = async (): Promise<BigNumber> => {
     let result = new BigNumber(0)
 
-    const account =
-      this.accounts.length > 0 && this.accounts[0] ? this.accounts[0].toLowerCase() : null
-    if (!this.contractsSource) return result
+    const account = this.getCurrentAccount()
+
+    if (!this.contractsSource || !account) {
+      return result
+    }
 
     const bZxContract = await this.contractsSource.getiBZxContract()
-    if (!account || !bZxContract) return result
+    if (!bZxContract) {
+      return result
+    }
 
     result = await bZxContract.rewardsBalanceOf.callAsync(account, {
       from: account
@@ -1057,8 +1089,8 @@ export class StakingProvider extends TypedEmitter<IStakingProviderEvents> {
         throw new Error('No provider available!')
       }
 
-      const account =
-        this.accounts.length > 0 && this.accounts[0] ? this.accounts[0].toLowerCase() : null
+      const account = this.getCurrentAccount()
+
       if (!account) {
         throw new Error('Unable to get wallet address!')
       }
