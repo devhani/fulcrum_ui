@@ -58,6 +58,12 @@
       background: #5b88ff;
       color: #fff;
     }
+    &[disabled],
+    &[disabled]:hover {
+      color: #758295;
+      background: #f5f7f9;
+      cursor: not-allowed;
+    }
     &--selected {
       background-color: #fff;
       border: 1px solid #b9c7d6;

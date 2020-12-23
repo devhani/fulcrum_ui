@@ -25,13 +25,9 @@ export default class AppVM {
     Object.assign(this, props)
   }
 
-  public exportContext(context: any) {
-    console.log(context)
-  }
-
   public init() {
     mobx.reaction(
-      () => this.rootStore.providerIsChanging,
+      () => this.rootStore.web3Connection.providerIsChanging,
       (isChanging) => {
         if (!isChanging) {
           this.providerMenu.hide()

@@ -57,7 +57,7 @@ export default function StakingForm({ vm }: { vm: StakingFormVM }) {
                 </div>
               )}
 
-              {vm.repListLoaded && vm.rootStore.web3Connexion.isConnected && (
+              {vm.repListLoaded && vm.rootStore.web3Connection.isConnected && (
                 <React.Fragment>
                   <TopRepList vm={vm} />
 

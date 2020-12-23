@@ -1,54 +1,45 @@
-import { useWeb3React } from '@web3-react/core'
+import { observer } from 'mobx-react'
 import React from 'react'
 import ProviderType from 'src/domain/ProviderType'
 import ProviderTypeDictionary from 'src/domain/ProviderTypeDictionary'
-import stakingProvider from 'src/services/StakingProvider'
 import { Loader, ButtonBasic } from 'ui-framework'
+import Web3Connection from 'src/stores/Web3Connection'
+
+const loader = <Loader quantityDots={3} sizeDots={'small'} title={''} isOverlay={false} />
 
 export interface IProviderMenuListItemProps {
+  web3Connection: Web3Connection
   disabled: boolean
   providerType: ProviderType
   isConnected: boolean
   isActivating: boolean
-  onSelect: (providerType: ProviderType) => void
 }
 
 export function ProviderMenuListItem(props: IProviderMenuListItemProps) {
-  const context = useWeb3React()
-  const { account } = context
+  const { web3Connection } = props
+  const { etherscanWalletLink, shortWalletAddress, supportedNetwork } = web3Connection
 
   const providerTypeDetails = ProviderTypeDictionary.providerTypes.get(props.providerType) || null
+
   if (!providerTypeDetails) {
     return null
   }
 
-  const onClick = () => {
-    props.onSelect(props.providerType)
-  }
   if (props.isConnected) {
-    const isUnSupportedNetwork = stakingProvider.unsupportedNetwork
-
-    const walletAddressText = isUnSupportedNetwork
-      ? 'Wrong Network!'
-      : account
-      ? `${account.slice(0, 6)}...${account.slice(account.length - 4, account.length)}`
-      : ''
-
-    const etherscanURL = stakingProvider.web3ProviderSettings
-      ? stakingProvider.web3ProviderSettings.etherscanURL
-      : ''
-
+    const walletAddressText = supportedNetwork ? shortWalletAddress : 'Wrong Network!'
     return (
       <ButtonBasic
         className="provider-menu__list-item provider-menu__list-item--selected"
-        disabled={props.disabled}
-        onClick={onClick}>
+        disabled={true}
+        onClick={web3Connection.connect}
+        onClickEmit="value"
+        value={props.providerType}>
         <div className="provider-menu__list-item-description">
           <span className="provider-name">{providerTypeDetails.displayName}</span>
-          {!isUnSupportedNetwork && account && etherscanURL ? (
+          {supportedNetwork && etherscanWalletLink ? (
             <a
               className="address"
-              href={`${etherscanURL}address/${account}`}
+              href={etherscanWalletLink}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(event) => event.stopPropagation()}>
@@ -68,18 +59,16 @@ export function ProviderMenuListItem(props: IProviderMenuListItemProps) {
   return (
     <ButtonBasic
       className="provider-menu__list-item"
-      onClick={onClick}
+      onClick={web3Connection.connect}
+      onClickEmit="value"
+      value={props.providerType}
       disabled={props.disabled}>
       <div className="provider-menu__list-item-content-txt">{providerTypeDetails.displayName}</div>
       <div className="provider-menu__list-item-content-img">
-        {props.isActivating ? (
-          <Loader quantityDots={3} sizeDots={'small'} title={''} isOverlay={false} />
-        ) : (
-          providerTypeDetails.reactLogoSvgShort.render()
-        )}
+        {props.isActivating ? loader : providerTypeDetails.reactLogoSvgShort.render()}
       </div>
     </ButtonBasic>
   )
 }
 
-export default React.memo(ProviderMenuListItem)
+export default observer(ProviderMenuListItem)

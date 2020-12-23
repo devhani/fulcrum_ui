@@ -9,7 +9,7 @@ import Rewards from './Rewards'
 import UserBalances from './UserBalances'
 import TransactionStatus from './TransactionStatus'
 
-type rootStoreProp = 'providerIsChanging' | 'error' | 'transactionStatus'
+type stakingStoreProp = 'error' | 'transactionStatus'
 
 export default class StakingStore {
   public rootStore: RootStore
@@ -17,7 +17,6 @@ export default class StakingStore {
   public rewards: Rewards
   public stakingProvider: StakingProvider
   public userBalances: UserBalances
-  public providerIsChanging = false
   public etherscanURL = ''
   public transactionStatus: TransactionStatus
   public error: Error | null = null
@@ -25,7 +24,7 @@ export default class StakingStore {
   /**
    * Helper to set values through mobx actions.
    */
-  public set(prop: rootStoreProp, value: any) {
+  public set(prop: stakingStoreProp, value: any) {
     this[prop] = value
   }
 
